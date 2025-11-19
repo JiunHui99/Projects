@@ -1,0 +1,2673 @@
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <cctype>
+#include <ctime>
+#include <set> // use in display movie without duplication
+#include <sstream> // use to generate invoice
+#include <vector> // uses for flexible array size
+#include <algorithm> // use to check contact number
+
+// CONSTANT VARIABLE
+int const ROWS = 10; // Movieseat row
+int const COLS = 11;// Movieseat column
+int const MAX_TICKETS = 10;
+int const MAX_ORDER = 10;
+int const memberid = 1433223;
+int const staffid = 123333;
+int const MAX_SALES = 1000;
+int const Adult = 15; // adult price
+int const Kid = 8; // kid price
+
+using namespace std;
+
+
+//STRUCTURE
+struct Seat {
+	int seat[ROWS][COLS] = { 0 };// seat row and column
+};
+
+// ordered tickets details
+struct TicketOrder {
+
+	string seats[MAX_TICKETS]; 	//seat array , MAX_tickets as array size to make sure user get to choose 10 ticket only
+	int totalTickets;
+	int adultcount; // adult tickets amount
+	int kidscount; // kid ticket amount
+	double totalticketprice;
+};
+
+// ordered movie details
+struct Movie {
+	string movieId;
+	string movieName;
+	string startTime;
+	int hall;
+	Seat movieSeat;
+};
+
+// ordered food details
+struct FoodOrder {
+	string name;
+	double Price = 0;
+	int quantity = 0;
+	double Total = 0;
+};
+
+// customer record
+struct OverallOrder {
+	string username;
+	string contact;
+	string methods;
+	double totalprice;
+	string invoicenum;
+	tm orderDate;
+};
+
+// Movie struct store on show movie details
+vector <Movie> movie{
+
+	{"M001","Inside Out","1100", 3},
+	{"M002","Inside Out","1400",5},
+	{"M003","Inside Out","1600",4},
+	{"M004","Despicable Me 4","1200",2},
+	{"M005","Despicable Me 4","1800",2},
+	{"M006","Despicable Me 4","2000",1},
+	{"M007","Deadpool","1300",4},
+	{"M008","Deadpool","1600",1},
+	{"M009","Deadpool","2100",3},
+	{"M010","Snow in Midsummer","1500",3},
+	{"M011","Snow in Midsummer","1930",4},
+	{"M012","Snow in Midsummer","2140",5},
+	{"M013","Project Silence","1000",1},
+	{"M014","Project Silence","1630",2},
+	{"M015","Project Silence","1800",1}
+
+
+};
+
+// Helper function to create tm date structure
+tm createDate(int year, int month, int day) {
+	tm date = {};
+	date.tm_year = year - 1900; // tm_year is years since 1900
+	date.tm_mon = month - 1;    // tm_mon is months since January (0-11)
+	date.tm_mday = day;
+	return date;
+}
+
+// Store customer order record
+OverallOrder customerList[MAX_SALES]{
+
+	// some hard coded past record
+	{"John", "0123456789", "Ewallet", 45.23, "A00001", createDate(2024, 1, 3)},
+	{"Emily", "0129876543", "Credit Card", 98.56, "A00002", createDate(2024, 1, 8)},
+	{"Michael", "0121122334", "Debit Card", 27.89, "A00003", createDate(2024, 1, 14)},
+	{"Sarah", "0129988776", "Cash", 142.32, "A00004", createDate(2024, 1, 20)},
+	{"David", "0125566778", "Ewallet", 56.40, "A00005", createDate(2024, 1, 24)},
+	{"Sophia", "0124455667", "Credit Card", 120.75, "A00006", createDate(2024, 2, 1)},
+	{"Daniel", "0123322114", "Debit Card", 22.50, "A00007", createDate(2024, 2, 5)},
+	{"Olivia", "0122233445", "Cash", 138.90, "A00008", createDate(2024, 2, 10)},
+	{"Matthew", "0129988444", "Ewallet", 62.33, "A00009", createDate(2024, 2, 15)},
+	{"Emma", "0126677889", "Credit Card", 89.21, "A00010", createDate(2024, 2, 20)},
+	{"James", "0125566998", "Debit Card", 49.99, "A00011", createDate(2024, 2, 25)},
+	{"Grace", "0121122444", "Cash", 157.12, "A00012", createDate(2024, 3, 1)},
+	{"Henry", "0126677553", "Ewallet", 75.65, "A00013", createDate(2024, 3, 6)},
+	{"Ava", "0125566889", "Credit Card", 123.45, "A00014", createDate(2024, 3, 10)},
+	{"Benjamin", "0123322889", "Debit Card", 36.78, "A00015", createDate(2024, 3, 15)},
+	{"Chloe", "0122233998", "Cash", 148.56, "A00016", createDate(2024, 3, 20)},
+	{"Lucas", "0129988221", "Ewallet", 61.90, "A00017", createDate(2024, 3, 25)},
+	{"Ella", "0126677990", "Credit Card", 135.00, "A00018", createDate(2024, 3, 30)},
+	{"Alexander", "0125566773", "Debit Card", 29.76, "A00019", createDate(2024, 4, 4)},
+	{"Lily", "0121122998", "Cash", 112.34, "A00020", createDate(2024, 4, 10)},
+	{"Sophia", "0125566443", "Debit Card", 52.45, "B00021", createDate(2024, 4, 15)},
+	{"Noah", "0126677331", "Cash", 139.87, "B00022", createDate(2024, 4, 20)},
+	{"Isabella", "0123344556", "Ewallet", 102.99, "B00023", createDate(2024, 5, 2)},
+	{"Sophie", "0122233447", "Ewallet", 63.75, "B00024", createDate(2024, 5, 7)},
+	{"David", "0125566778", "Ewallet", 56.40, "B00025", createDate(2024, 5, 12)},
+	{"James", "0125566998", "Debit Card", 49.99, "B00026", createDate(2024, 5, 18)},
+	{"Ethan", "0127766554", "Credit Card", 59.47, "B00027", createDate(2024, 5, 22)},
+	{"Lucas", "0129988221", "Ewallet", 61.90, "B00028", createDate(2024, 6, 2)},
+	{"Mia", "0129988771", "Debit Card", 74.85, "B00029", createDate(2024, 6, 10)},
+	{"Alexander", "0125566773", "Debit Card", 29.76, "B00030", createDate(2024, 6, 15)},
+	{"Sophia", "0122244668", "Ewallet", 47.75, "B00031", createDate(2024, 6, 20)},
+	{"Matthew", "0129988444", "Ewallet", 62.33, "B00032", createDate(2024, 6, 25)},
+	{"Mason", "0123344882", "Cash", 132.45, "B00033", createDate(2024, 7, 5)},
+	{"Logan", "0125544332", "Credit Card", 123.60, "B00034", createDate(2024, 7, 10)},
+	{"Ava", "0121122448", "Ewallet", 86.75, "B00035", createDate(2024, 7, 15)},
+	{"Harper", "0121133779", "Debit Card", 39.99, "B00036", createDate(2024, 7, 20)},
+	{"Ava", "0125566889", "Credit Card", 123.45, "B00037", createDate(2024, 7, 25)},
+	{"Jackson", "0126677883", "Cash", 151.20, "B00038", createDate(2024, 8, 2)},
+	{"Sophie", "0122233447", "Ewallet", 63.75, "B00039", createDate(2024, 8, 7)},
+	{"Liam", "0126677552", "Credit Card", 145.40, "B00040", createDate(2024, 8, 12)},
+	{"Sophia", "0125566443", "Debit Card", 52.45,"C00041", createDate(2024, 8, 18)},
+	{"Amelia", "0123344669", "Debit Card", 69.10, "C00042", createDate(2024, 8, 22)},
+	{"Ella", "0126677990", "Credit Card", 135.00, "C00043", createDate(2024, 9, 1)},
+	{"Elijah", "0125566772", "Cash", 135.80, "C00044", createDate(2024, 9, 5)},
+	{"Evelyn", "0127788993", "Ewallet", 113.65, "C00045", createDate(2024, 9, 9)},
+	{"James", "0124433221", "Credit Card", 157.99, "C00046", createDate(2024, 9, 9)},
+	{"Lily", "0121122998", "Cash", 112.34, "C00047", createDate(2024, 9, 10)},
+
+
+};
+
+int salesIndex = 47; // initialize the index .Before we have 47 hard-coded record
+time_t now = time(0);
+tm localTime; // Create a tm structure to hold the local time
+
+// FUNCTION PROTOTYPE
+void clearBuff();
+void cls();
+string Checking();
+bool checkForExit(string input);
+void showAvailableSeat(vector<Movie>& movie, int index);
+bool checkSeatAvailable(vector<Movie>& movie, char row, int seatNumber, int quantity, int index);
+void TicketTypeDisplay();
+TicketOrder selectSeat(int index);
+void OrderCart(FoodOrder foodOrder[], int i);
+void orderProcess(string name, string size, double priceS, double priceL, int* i, FoodOrder order[]);
+void handleFood();
+void handleBeverage();
+void InnerfoodNBeverageMenu(FoodOrder foodOrder[MAX_ORDER], int& orderCount);
+void OutterfoodNBeverageMenu(FoodOrder foodOrder[MAX_ORDER], int& orderCount);
+void MovieList();
+void StaffMovielist();
+int MovieShowTime(string SelectedMovieName, string SelectedMovieId, string SelectedStartTime, int MovieHall);
+void MovieCart(int movieIndex);
+void MovieMenu();
+string PaymentProcess();
+string generateInvoiceNumber(int salesIndex);
+void Invoice(int movieIndex, TicketOrder order);
+void Invoice(FoodOrder foodOrder[], int foodIndex);
+void Invoice(int movieIndex, TicketOrder order, FoodOrder foodOrder[], int foodIndex);
+void SalesReport();
+bool movieIdchecking(string MovieId, set<string> usedIds);
+void CustCheckin();
+void MovieUpdate();
+void AddMovie();
+void RemoveMovie();
+void Moviesetting();
+void CustCheckin();
+void Moviesetting();
+void UserMenu();
+void staffmenu();
+void StaffLogin();
+void UserLogin();
+
+
+
+//Function section
+
+// Clear infinity looping when error
+void clearBuff() {
+	cin.clear(); // Clear the error flag
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
+// Uses for repeating yes / no selection
+string Checking() {
+
+	cout << setw(40) << "" << "Enter Yes or No ( Y /N ): ";
+	string select;
+	cin >> select;
+	for (char& c : select) {
+		c = toupper(c);
+	}
+
+	while (select.length() > 1 || (select != "Y" && select != "N")) {
+		cout << endl;
+		cout << setw(33) << "" << "(!) Invalid input. You can only choose Y or N." << endl;
+		cout << setw(33) << "" << "Enter: ";
+		cin >> select;
+		for (char& c : select) {
+			c = toupper(c);
+		}
+	}
+	return select;
+}
+
+// uses for movie settings return 
+bool checkForExit(string input) {
+	if (input == "99") {
+		cout << endl << setw(36) << "" << "Returning to the Movie Settings..." << endl;
+		cout << setw(39) << "" << "Press (any) key to continue.." << endl;
+		cin.get();  
+		Moviesetting();  // Return to movie settings
+		return true;  // Return true to indicate exit
+	}
+	return false;  // Continue normal execution
+}
+
+// uses for staff menu return 
+bool gobacktostaff(int input) {
+	if (input == 99) {
+		cout << endl << setw(40) << "" << "Returning to the Staff Menu" << endl;
+		cout << setw(39) << "" << "Press (any) key to continue..." << endl;
+		cin.get();
+		cin.get();
+		staffmenu();  // Return to movie settings
+		return true;  // Return true to indicate exit
+	}
+	return false;  // Continue normal execution
+}
+
+// Clear screen
+void cls() {
+	system("CLS");
+}
+
+// check memebrship
+int membership() {
+
+	int valid, member, mem_id;
+
+	do{
+	valid = 0;
+	cls();
+	cout << endl << setw(41) << "" << "Are you a MEMBER of us?" << endl;
+	string select = Checking();
+
+	if (select == "Y") {
+		cout << endl << setw(39) << "" << "Please enter your [ MemberID ]" << endl;
+		cout << setw(43) << "" << "MemberID: ";
+		cin >> mem_id;
+
+		if (cin.fail() || mem_id != memberid) {
+			clearBuff();
+			cout << endl << setw(37) << "" << "Incorrect input, Please try again." << endl;
+			cout << setw(42) << "" << "Press (any) key to proceed";
+			cin.get();
+			valid = 1;
+		}
+		else {
+			member = 1;
+		}
+	}
+	else {
+		member = 0;
+	}
+
+} while (valid == 1);
+
+return member;
+}
+
+// Show user seat available
+void showAvailableSeat(vector<Movie>& movies, int index) {
+
+	cls();
+	cout << setw(62) << " | SCREEN | " << endl << endl; // screen location
+
+
+	for (int i = 0; i < ROWS; i++) {
+
+		cout << setw(18) << char(65 + i);
+
+
+		for (int j = 0; j < COLS; j++) {
+
+			if (movie[index].movieSeat.seat[i][j] == 1) { // if selected
+				cout << "|__X__|";
+			}
+
+			else {
+				cout << "|_____|"; // if available
+			}
+		}
+		cout << endl;
+	}
+
+
+	cout << setw(21) << " ";
+	for (int j = 1; j <= COLS; j++) { // print number of columns
+		cout << j << setw(7);
+	}
+	cout << endl;
+
+
+}
+
+// Check seat available 
+bool checkSeatAvailable(vector<Movie>& movie, char row, int seatNumber, int quantity, int index) {
+
+	int rowIndex = row - 'A';
+
+	if (movie[index].movieSeat.seat[rowIndex][seatNumber - 1] == 1) {
+
+		return false; // booked
+	}
+	else {
+
+		return true; // available
+	}
+} // what mean
+
+void TicketTypeDisplay() {
+
+	cls();
+	cout << setw(40) << "" << " ---------------------- " << endl;
+	cout << setw(40) << "" << "|   Select your seat   |" << endl;
+	cout << setw(40) << "" << " ---------------------- " << endl;
+
+	cout << endl << setw(40) << "" << "Ticket Type" << endl;
+	cout << endl << setw(40) << "" << "(1) Adults        (RM 15)" << endl;
+	cout << setw(40) << "" << "(2) Kids          (RM 8)" << endl;
+	cout << endl << setw(33) << "" << "You can only choose Maximum 10 tickets" << endl;
+	cout << setw(37) << "" << "Enter quantity for ticket type" << endl;
+
+}
+
+// Tickets order details
+TicketOrder selectSeat(int index) {
+
+
+	TicketOrder userOrder; // userorder this is local variable
+	char row;
+	int seatNumber;
+	int quantity;
+	int seatIndex = 0;
+	int ticketleft;
+	string name;
+
+	TicketTypeDisplay();
+
+	cout << endl << setw(40) << "" << "[1] Adults : " << setw(5) << "";
+	cin >> userOrder.adultcount;
+
+	// Validation for adults' ticket quantity
+	while (userOrder.adultcount > MAX_TICKETS || cin.fail() || userOrder.adultcount < 0) {
+		clearBuff();
+		cout << endl << setw(45) << "" << setw(17) << setfill('-') << "" << setfill(' ') << endl;
+		cout << endl << setw(35) << "" << "(!) Invalid input. Please try again" << endl;
+		cout << endl << setw(35) << "" << "(!) Maximum tickets order is 10" << endl;
+		cout << endl << setw(40) << "" << "[1] Adults : " << setw(5) << "";
+		cin >> userOrder.adultcount;
+	}
+
+	ticketleft = MAX_TICKETS - userOrder.adultcount; // Calculate remaining tickets
+
+	TicketTypeDisplay();
+
+	cout << endl << setw(40) << "" << "[2] Kids : " << setw(7) << "";
+	cin >> userOrder.kidscount;
+
+	// Validation for kids' ticket quantity
+	while (userOrder.kidscount > ticketleft || cin.fail() || userOrder.kidscount < 0) {
+		clearBuff();
+		cout << endl << setw(45) << "" << setw(17) << setfill('-') << "" << setfill(' ') << endl;
+		cout << endl << setw(35) << "" << "(!) Invalid input. Please try again" << endl;
+		cout << endl << setw(35) << "" << "(!) You gets to order" << ticketleft << "left" << endl;
+		cout << endl << setw(40) << "" << "[2] Kids : " << setw(7) << "";
+		cin >> userOrder.kidscount;
+	}
+
+
+	userOrder.totalTickets = userOrder.adultcount + userOrder.kidscount; // sum of the tickets
+
+	userOrder.totalticketprice = (userOrder.adultcount * Adult) + (userOrder.kidscount * Kid); // sum of the tickets price
+
+	showAvailableSeat(movie, index);
+
+	quantity = userOrder.totalTickets;
+
+	do {
+		cout << endl << setw(42) << "" << "Movie choosen : " << movie[index].movieName << endl;
+		cout << endl << setw(40) << "" << "You have ordered " << quantity << " tickets." << endl;
+		cout << setw(38) << "" << "You are now selecting ticket #" << seatIndex + 1 << "." << endl;
+
+		cout << endl << setw(35) << "" << "Please select your seat row (A-J): ";
+		cin >> row;
+		row = toupper(row);
+
+
+		while (cin.fail() || row < 65 || row > 74) { // using ASCII for checking
+			clearBuff();
+			cout << endl << setw(45) << "" << setw(17) << setfill('-') << "" << setfill(' ') << endl;
+			cout << setw(34) << "" << "(X) You can only choose within A to J." << endl;
+			cout << endl << setw(35) << "" << "Please select your seat row (A-J): ";
+			cin >> row;
+			row = toupper(row);
+		}
+
+		cout << endl << setw(35) << "" << "Please select your seat number (1-11): ";  // seat number checking
+		cin >> seatNumber;
+
+		while (cin.fail() || seatNumber < 1 || seatNumber > 11) {
+			clearBuff();
+			cout << endl << setw(45) << "" << setw(17) << setfill('-') << "" << setfill(' ') << endl;
+			cout << setw(34) << "" << "(X) You can only choose within 1 to 11." << endl;
+			cout << endl << setw(35) << "" << "Please select your seat number (1-11): ";
+			cin >> seatNumber;
+
+		}
+
+
+		if (checkSeatAvailable(movie, row, seatNumber, quantity, index)) {
+
+			cout << setw(38) << ""  "The seat " << row << seatNumber << " is available." << endl;
+
+			movie[index].movieSeat.seat[row - 'A'][seatNumber - 1] = 1;
+
+
+			string seatStr = string(1, row) + to_string(seatNumber); // combine row and columns into string
+
+
+			userOrder.seats[seatIndex] = seatStr; // store seat into struct array
+
+			seatIndex++;
+
+
+
+			showAvailableSeat(movie, index);
+
+		}
+		else {
+
+			cout << setw(38) << "" << "The seat " << row << seatNumber << " is already taken." << endl; // if seat taken output will show this
+		}
+
+	} while (seatIndex < quantity); // if haven't reached total quantity yet, loop again
+
+
+	return userOrder;
+}
+
+// Food order cart
+void OrderCart(FoodOrder foodOrder[], int i) { // Order Cart
+
+	for (int x = 0; x < i; x++) {
+		cout << setw(38) << "" << setw(37) << setfill('.') << "" << setfill(' ') << endl;
+		cout << endl << setw(38) << "" << "* Order No: " << setw(24) << x + 1 << endl;
+		cout << setw(38) << "" << "* Item Name: " << setw(23) << foodOrder[x].name << endl;
+		cout << setw(38) << "" << "* Item Quantity: " << setw(19) << foodOrder[x].quantity << endl;
+		cout << setw(38) << "" << "* Item Price (RM per Unit): " << setw(8) << fixed << setprecision(2) << foodOrder[x].Price << endl;
+		cout << setw(38) << "" << "* Total (RM):" << setw(23) << fixed << setprecision(2) << foodOrder[x].Total << endl;
+
+	}
+}
+
+// Handle selected food process
+void orderProcess(string name, string size, double priceS, double priceL, int* i, FoodOrder order[]) {
+
+
+	int quantity = 0;
+	int orderNo = *i; // using pointer so that the variable can carry the value to other function
+	int valid = 0; // act as flag
+	string chooseSize;
+
+
+	double Price = 0;
+
+	//check orderNo exceed 10 
+	if (orderNo >= MAX_ORDER) {
+		cout << setw(44) << "" << "Maximum 10 orders reached." << endl;
+	}
+	else {
+
+		cls();
+
+
+		cout << endl << setw(44) << "" << "Item Name:" << setw(5) << "" << "[" << name << "]" << endl;
+		cout << endl << setw(42) << "" << "Size : " << setw(8) << "" << size << endl;
+		cout << endl << setw(40) << "" << "Price for small (S) : RM" << setw(10) << priceS << endl;
+		cout << setw(40) << "" << "Price for large (L) : RM" << setw(10) << priceL << endl;
+
+		cout << setw(41) << "" << setfill('.') << setw(30) << "" << setfill(' ') << endl;
+
+		cout << endl << setw(43) << "" << "Select the size (S / L): ";
+		cin >> chooseSize;
+
+		for (char& c : chooseSize) {
+			c = toupper(c);
+		}
+
+		while (chooseSize.length() > 1 || (chooseSize != "S" && chooseSize != "L")) {
+			cout << endl << setw(48) << "" << setfill('-') << setw(20) << "" << setfill(' ') << endl;
+			cout << endl << setw(41) << "" << "(!) Invalid input, please retry." << endl;
+			cout << setw(46) << "" << "Select the size (S / L): ";
+			cin >> chooseSize;
+			for (char& c : chooseSize) {
+				c = toupper(c);
+			}
+		}
+
+		if (chooseSize == "S") {
+			Price = priceS;
+		}
+		else {
+			Price = priceL;
+		}
+
+		cout << endl << setw(38) << "" << "Please enter quantity (maximum 10): ";
+		cin >> quantity;
+
+		while (cin.fail() || quantity < 1 || quantity > 10) {
+			clearBuff();
+			cout << endl << setw(48) << "" << setfill('-') << setw(20) << "" << setfill(' ') << endl;
+			cout << endl << setw(31) << "" << "(!) Invalid input. You can only choose between 1 and 10." << endl;
+			cout << setw(40) << "" << "Please enter quantity (maximum 10): ";
+			cin >> quantity;
+		}
+
+		valid = 0;
+		order[orderNo].name = name;
+		order[orderNo].quantity = quantity;
+		order[orderNo].Price = Price;
+		order[orderNo].Total = Price * quantity;
+		(*i)++;
+
+		cout << endl << setw(26) << "" << "[Order No." << orderNo + 1 << "] is placed. Size(" << chooseSize << ")  Quantity(" << quantity << ")  Total Price : RM"
+			<< setprecision(2) << fixed << order[orderNo].Total << endl; // display ordered details
+		cout << endl;
+
+		cout << setw(44) << "" << "Press (any) key to proceed..";
+		cin.get();
+		cin.get();
+
+	}
+
+}
+
+// Display food menu
+void handleFood() { // Food menu 
+
+	cout << setw(34) << "" << setw(37) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(34) << "|" << setw(5) << "" << setw(23) << "----------------------------" << setw(5) << "|" << endl;
+	cout << setw(34) << "|" << setw(5) << "|" << setw(25) << "  THE FOOD YOU WOULD ENJOY  " << "|" << setw(4) << "|" << endl;
+	cout << setw(34) << "|" << setw(5) << "" << setw(23) << "----------------------------" << setw(5) << "|" << endl;
+
+	cout << setw(34) << "|" << setw(38) << "|" << endl;
+
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(1) Popcorn" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(2) Hotdog" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(3) Nuggets" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(0) Return to the previous page." << "|" << endl;
+
+	cout << right << setw(34) << "|" << setw(38) << "|" << endl;
+	cout << setw(34) << "" << setw(37) << setfill('-') << "" << setfill(' ') << endl;
+
+}
+
+// Display beverages menu
+void handleBeverage() { // drink menu
+
+	cout << setw(34) << "" << setw(37) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(34) << "|" << setw(5) << "" << setw(23) << "---------------------------" << setw(6) << "|" << endl;
+	cout << setw(34) << "|" << setw(5) << "|" << setw(25) << "   THE TASTE OF CHILL   " << setw(4) << "|" << setw(4) << "|" << endl;
+	cout << setw(34) << "|" << setw(5) << "" << setw(23) << "---------------------------" << setw(6) << "|" << endl;
+
+	cout << setw(34) << "|" << setw(38) << "|" << endl;
+
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(1) Coca-cola" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(2) Lemon Tea" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(3) Mineral water" << "|" << endl;
+	cout << setw(34) << right << "|" << setw(2) << "" << setw(35) << left << "(0) Return to the previous page." << "|" << endl;
+
+	cout << right << setw(34) << "|" << setw(38) << "|" << endl;
+	cout << setw(34) << "" << setw(37) << setfill('-') << "" << setfill(' ') << endl;
+}
+
+// Uses for only food order purpose
+void OutterfoodNBeverageMenu(FoodOrder foodOrder[MAX_ORDER], int& orderCount) {
+
+	int choose, choice = -1;
+	int valid;
+	int ans;
+	orderCount = 0;
+
+	do {
+		do {
+
+
+			cls();
+			cout << setw(38) << "" << setw(30) << setfill('-') << "" << setfill(' ') << endl;
+			cout << setw(38) << "|" << setw(3) << "" << "------------------------" << setw(4) << "|" << endl;
+			cout << setw(38) << "|" << setw(3) << "|" << setw(3) << "" << "FOOD and BEVERAGES" << setw(4) << "|" << setw(3) << "|" << endl;
+			cout << setw(38) << "|" << setw(3) << "" << "------------------------" << setw(4) << "|" << endl;
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+
+			cout << setw(38) << "|" << setw(4) << "" << "1. Food" << setw(20) << "|" << endl;
+			cout << setw(38) << "|" << setw(4) << "" << "2. Beverage" << setw(16) << "|" << endl;
+			cout << setw(38) << "|" << setw(4) << "" << "3. Cart" << setw(20) << "|" << endl;
+			cout << setw(38) << "|" << setw(4) << "" << "4. Return" << setw(18) << "|" << endl;
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+
+			cout << setw(38) << "|" << setw(3) << "" << "[0] Proceed to payment" << setw(6) << "|" << endl;
+
+
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+			cout << setw(38) << "" << setw(30) << setfill('-') << "" << setfill(' ') << endl;
+
+			cout << endl << setw(38) << "" << "Please select your choice: ";
+			cin >> choose;
+
+			while (cin.fail() || choose < 0 || choose > 4) { // no need default, default need flag and loop again for the start
+				clearBuff();
+				cout << endl << setw(30) << "" << "(!) Invalid input. You can only choose 0 to 4." << endl;
+				cout << setw(38) << "" << "Please select your choice: ";
+				cin >> choose;
+			}
+
+
+
+
+			switch (choose) {
+
+			case 1:
+
+				cls();
+				handleFood();
+				cout << endl << setw(35) << "" << "Please select your order: ";
+				cin >> choice;
+
+				while (cin.fail() || choice < 0 || choice > 3) {
+					clearBuff();
+					cout << endl << setw(30) << "" << "(!) Invalid input.You can only choose 0 to 3." << endl;
+					cout << endl << setw(38) << "" << "Please select your choice: ";
+					cin >> choice;
+				}
+
+				switch (choice) {
+
+
+				case 1:
+					//pass i into function to let it know this is which order
+					//pass "order" means let the function know the details will store in this "order"
+					orderProcess("Popcorn", "Small / Large", 8.50, 12.50, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 2:
+					orderProcess("Hotdog", "Small / Large", 8.00, 10.00, &orderCount, foodOrder);
+					valid = 1;
+					break;
+				case 3:
+					orderProcess("Nuggets", "Small (8pcs) / Large (12pcs)", 10.00, 15.00, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 0:
+					valid = 0;
+					break;
+				}
+
+
+				break;
+
+			case 2:
+
+				cls();
+				handleBeverage();
+				cout << endl << setw(35) << "" << "Please select your order: ";
+				cin >> choice;
+
+
+				while (cin.fail() || choice < 0 || choice > 3) {
+					clearBuff();
+					cout << endl << setw(30) << "" << "(!) Invalid input.You can only choose 0 to 3." << endl;
+					cout << endl << setw(38) << "" << "Please select your choice: ";
+					cin >> choice;
+				}
+
+				switch (choice) {
+				case 1:
+					orderProcess("Coca-cola", "Small / Large", 7.5, 11, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 2:
+					orderProcess("Lemon Tea", "Small / Large", 5, 7, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 3:
+					orderProcess("Mineral water", "Small / Large", 3.5, 5.5, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 0:
+					valid = 0;
+					break;
+
+				}
+
+				break;
+
+			case 3:
+
+				cls();
+				cout << setw(48) << "" << " -------------- " << endl;
+				cout << setw(48) << "" << "|     CART     |" << endl;
+				cout << setw(48) << "" << " -------------- " << endl;
+				OrderCart(foodOrder, orderCount);
+				cout << endl << setw(43) << "" << "Press any key to continue..";
+				cin.get();
+				cin.get();
+				break;
+
+
+			case 4:
+
+				UserMenu();
+
+				break;
+
+
+
+			case 0:
+
+
+				if (orderCount == 0) {
+					valid = 0;
+					cout << endl << setw(38) << "" << "Your FoodOrder Cart is empty " << endl;
+					cout << setw(39) << "" << "Press (any) key to proceed.." << endl;
+					cin.get();
+					cin.get();
+				}
+
+				break;
+
+			}
+
+			//check order number
+			if (orderCount > 10) {
+				cout << "Maximum 10 orders " << endl;
+			}
+
+
+		} while (orderCount < 10 && choose != 0); //if order number smaller then 10 or your choose not 0 , then it will continue loop
+
+	} while (valid == 0); // If choose input error, will loop again
+
+
+}
+
+// Appear after selected movie 
+void InnerfoodNBeverageMenu(FoodOrder foodOrder[MAX_ORDER], int& orderCount) { // food odering main page
+
+	int choose, choice = -1;
+	int valid;
+	int ans;
+	orderCount = 0;
+
+	do {
+		do {
+
+
+			cls();
+			cout << setw(38) << "" << setw(30) << setfill('-') << "" << setfill(' ') << endl;
+			cout << setw(38) << "|" << setw(3) << "" << "------------------------" << setw(4) << "|" << endl;
+			cout << setw(38) << "|" << setw(3) << "|" << setw(3) << "" << "FOOD and BEVERAGES" << setw(4) << "|" << setw(3) << "|" << endl;
+			cout << setw(38) << "|" << setw(3) << "" << "------------------------" << setw(4) << "|" << endl;
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+
+			cout << setw(38) << "|" << setw(4) << "" << "1. Food" << setw(20) << "|" << endl;
+			cout << setw(38) << "|" << setw(4) << "" << "2. Beverage" << setw(16) << "|" << endl;
+			cout << setw(38) << "|" << setw(4) << "" << "3. Cart" << setw(20) << "|" << endl;
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+
+			cout << setw(38) << "|" << setw(3) << "" << "[0] Proceed to payment" << setw(6) << "|" << endl;
+
+
+			cout << setw(38) << "|" << setw(31) << "|" << endl;
+			cout << setw(38) << "" << setw(30) << setfill('-') << "" << setfill(' ') << endl;
+
+			cout << endl << setw(38) << "" << "Please select your choice: ";
+			cin >> choose;
+
+			while (cin.fail() || choose < 0 || choose > 3) { //input validation
+				clearBuff();
+				cout << endl << setw(30) << "" << "(!) Invalid input. You can only choose 0 to 3." << endl;
+				cout << setw(38) << "" << "Please select your choice: ";
+				cin >> choose;
+			}
+
+
+			switch (choose) {
+
+			case 1:
+
+				cls();
+				handleFood();
+				cout << endl << setw(35) << "" << "Please select your order: ";
+				cin >> choice;
+
+				while (cin.fail() || choice < 0 || choice > 3) {
+					clearBuff();
+					cout << endl << setw(30) << "" << "(!) Invalid input.You can only choose 0 to 3." << endl;
+					cout << endl << setw(38) << "" << "Please select your choice: ";
+					cin >> choice;
+				}
+
+				switch (choice) {
+
+
+				case 1:
+					orderProcess("Popcorn", "Small / Large", 8.50, 12.50, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 2:
+					orderProcess("Hotdog", "Small / Large", 8.00, 10.00, &orderCount, foodOrder);
+					valid = 1;
+					break;
+				case 3:
+					orderProcess("Nuggets", "Small (8pcs) / Large (12pcs)", 10.00, 15.00, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 0:
+					valid = 0;
+					break;
+				}
+
+
+				break;
+
+			case 2:
+
+				cls();
+				handleBeverage();
+				cout << endl << setw(35) << "" << "Please select your order: ";
+				cin >> choice;
+
+
+				while (cin.fail() || choice < 0 || choice > 3) {
+					clearBuff();
+					cout << endl << setw(30) << "" << "(!) Invalid input.You can only choose 0 to 3." << endl;
+					cout << endl << setw(38) << "" << "Please select your choice: ";
+					cin >> choice;
+				}
+
+				switch (choice) {
+				case 1:
+					orderProcess("Coca-cola", "Small / Large", 7.5, 11, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 2:
+					orderProcess("Lemon Tea", "Small / Large", 5, 7, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 3:
+					orderProcess("Mineral water", "Small / Large", 3.5, 5.5, &orderCount, foodOrder);
+					valid = 1;
+					break;
+
+				case 0:
+					valid = 0;
+					break;
+
+				}
+
+				break;
+
+			case 3:
+
+				cls();
+				cout << setw(48) << "" << " -------------- " << endl;
+				cout << setw(48) << "" << "|     CART     |" << endl;
+				cout << setw(48) << "" << " -------------- " << endl;
+				OrderCart(foodOrder, orderCount);
+				cout << endl << setw(43) << "" << "Press any key to continue..";
+				cin.get();
+				cin.get();
+				break;
+
+			case 0:
+
+				cout << endl << setw(43) << "" << "[Proceed to Payment]" << endl;
+				valid = 1;
+
+				break;
+
+			}
+			//check order number
+			if (orderCount > 10) {
+				cout << "Maximum 10 orders " << endl;
+			}
+
+
+		} while (orderCount < 10 && choose != 0); //if order number smaller then 10 or your choose not 0 , then it will continue loop
+
+	} while (valid == 0); // If choose input error, will loop again
+
+
+}
+
+// Onshow movie list
+void MovieList() {
+
+	cls();
+	cout << setw(41) << "" << " ------------------ " << endl;
+	cout << setw(41) << "" << "|    MOVIE LIST    |" << endl;
+	cout << setw(41) << "" << " ------------------ " << endl;
+
+	cout << setw(32) << "" << setw(40) << setfill('-') << "" << setfill(' ') << endl;
+	for (int i = 0; i < movie.size(); i += 3) {
+
+		//movie name
+		cout << setw(32) << "|" << setw(40) << "" << "|" << endl;
+		cout << setw(32) << "|" << setw(10) << "" << left << setw(20) << movie[i].movieName << right << "" << setw(11) << "|" << endl;
+
+		//movie time
+		cout << right << setw(32) << "|" << setw(10) << "  > " << movie[i].startTime
+			<< "  > " << movie[i + 1].startTime
+			<< "  > " << movie[i + 2].startTime << setw(10) << "" << "|" << endl;
+	}
+	cout << setw(32) << "|" << setw(40) << "" << "|" << endl;
+	cout << setw(32) << "" << setw(40) << setfill('-') << "" << setfill(' ') << endl;
+}
+
+// more detials movie list for staff updating movie purpose [display]
+void StaffMovielist() {
+
+	cls();
+	cout << setw(40) << "" << setw(1) << " -------------------------- " << endl;
+	cout << setw(40) << "" << setw(1) << "|    CURRENT MOVIE LIST    |" << endl;
+	cout << setw(40) << "" << setw(1) << " -------------------------- " << endl;
+
+	int index = 0;
+
+	cout << setw(31) << "" << setw(47) << setfill('-') << "" << setfill(' ') << endl;
+	while (index < movie.size()) { // loop through struct movie arrray to know what movies on show
+		// Print the movie name
+		cout << setw(31) << "|" << setw(48) << "|" << endl;
+		cout << setw(31) << "|" << setw(4) << "" << left << setw(20) << movie[index].movieName << right << setw(24) << "|" << endl;
+
+		// Print showtimes, IDs, and halls for the movie
+		/* we know that each movie have 3 show times, it will loop 3 times to get next 3 the movie detials
+		if it satifies the same names condition */
+		for (int i = 0; i < 3 && index < movie.size() && movie[index].movieName == movie[index].movieName; i++) {
+			cout << setw(31) << "|" << setw(8) << "  > Showtime: " << movie[index].startTime
+				<< ", ID: " << movie[index].movieId
+				<< ", Hall: " << movie[index].hall << setw(11) << "|" << endl;
+			index++;
+		}
+	}
+	cout << setw(31) << "|" << setw(48) << "|" << endl;
+	cout << setw(31) << "" << setw(47) << setfill('-') << "" << setfill(' ') << endl;
+
+}
+
+// Get user select movie details
+int MovieShowTime(string SelectedMovieName, string SelectedMovieId, string SelectedStartTime, int MovieHall) {
+
+	string id;
+	bool validId = false; // as a flag
+	int index = -1;
+
+	cls();
+	cout << setw(40) << "" << " --------------------------- " << endl;
+	cout << setw(40) << "" << "|  Available Showtimes for  |" << endl;
+	cout << setw(40) << "" << " --------------------------- " << endl;
+	cout << endl << setw(42) << "> " << SelectedMovieName << endl;
+
+	for (int i = 0; i < movie.size(); i++) { // Loop through every movie
+		if (movie[i].movieName == SelectedMovieName) {
+			cout << endl << setw(38) << "" << "Movie ID: " << setw(26) << movie[i].movieId << endl;
+			cout << setw(38) << "" << "Movie Name: " << setw(24) << movie[i].movieName << endl;
+			cout << setw(38) << "" << "Movie Start Time: " << setw(18) << movie[i].startTime << endl;
+		}
+	}
+
+	do {
+		cout << endl << setw(38) << "" << "Enter (MovieID) for TIME selection: ";
+		cin >> id;
+
+		for (int i = 0; i < movie.size(); i++) {
+			if (movie[i].movieId == id && movie[i].movieName == SelectedMovieName) {
+				validId = true;
+				index = i;
+				break; // Exit the FOR loop once the movie is found
+			}
+		}
+
+		if (!validId) {
+			cout << endl << setw(50) << "" << setw(12) << setfill('-') << "" << setfill(' ') << endl;
+			cout << endl << setw(24) << "" << "(!) Invalid input, Please enter exactly MovieId for the time you need." << endl;
+		}
+	} while (!validId);
+
+
+	return index;
+
+
+}
+
+// Display selected Moviedetails
+void MovieCart(int movieIndex) {
+
+
+	TicketOrder order = selectSeat(movieIndex);
+	string choose;
+	cls();
+	cout << setw(41) << "" << " --------------------- " << endl;
+	cout << setw(41) << "" << "|    ORDER SUMMARY    |" << endl;
+	cout << setw(41) << "" << " --------------------- " << endl;
+
+	cout << setw(28) << "" << setw(49) << setfill('-') << "" << setfill(' ') << endl;
+
+	cout << setw(28) << "|" << setw(4) << "" << "Movie you have selected:" << setw(22) << "|" << endl;
+	cout << setw(28) << "|" << setw(50) << "|" << endl;
+	cout << setw(28) << "|" << setw(4) << "" << "Movie ID : " << setw(29) << movie[movieIndex].movieId << setw(6) << "|" << endl;
+	cout << setw(28) << "|" << setw(4) << "" << "Movie Name: " << setw(28) << movie[movieIndex].movieName << setw(6) << "|" << endl;
+	cout << setw(28) << "|" << setw(4) << "" << "Movie Start at: " << setw(24) << movie[movieIndex].startTime << setw(6) << "|" << endl;
+	cout << setw(28) << "|" << setw(4) << "" << "Movie Hall: " << setw(28) << movie[movieIndex].hall << setw(6) << "|" << endl;
+
+	cout << setw(28) << "|" << setw(50) << "|" << endl;
+	cout << setw(28) << "" << setw(49) << setfill('-') << "" << setfill(' ') << endl;
+
+	cout << endl << setw(38) << "" << "Total tickets ordered: " << order.totalTickets << endl;
+	cout << setw(38) << "" << "Seats reserved:" << endl;
+
+	cout << endl;
+	for (int i = 0; i < order.totalTickets; ++i) {
+		cout << setw(38) << "" << " > Ticket " << (i + 1) << ": " << order.seats[i] << endl;
+	}
+
+	cout << endl << setw(32) << "" << "Do you want to purchase Food and Beverages?" << endl;
+	string select = Checking();
+
+	if (select == "Y") {
+		int foodIndex = 0;
+		FoodOrder foodOrder[MAX_ORDER];
+
+		InnerfoodNBeverageMenu(foodOrder, foodIndex);
+
+
+		Invoice(movieIndex, order, foodOrder, foodIndex);
+
+
+	}
+	else {
+		Invoice(movieIndex, order);
+	}
+}
+
+// Movie onshow selection
+void MovieMenu() {
+
+	int movieNum, index = 1;
+	string SelectedMovieName;
+	string SelectedMovieId;
+	string SelectedStartTime;
+	int MovieHall = 0;
+
+	cls();
+	cout << setw(40) << "" << " ------------------------- " << endl;
+	cout << setw(40) << "" << "|      Movie On Show      |" << endl;
+	cout << setw(40) << "" << " ------------------------- " << endl;
+	cout << endl;
+
+	cout << setw(37) << "" << setw(34) << setfill('-') << "" << setfill(' ') << endl;
+	set<string> eachMovies; // Store movie names (set automatically removes duplicates)
+	for (int i = 0; i < movie.size(); i++) {
+		eachMovies.insert(movie[i].movieName);
+	}
+
+	vector<string> movieNames;  // Store movie names in display order
+	for (const auto& movieName : eachMovies) {
+
+		cout << right << setw(37) << "|" << setw(35) << "|" << endl; // outing purpose
+
+		cout << setw(37) << "|" << setw(4) << index << ". " << left << setw(20) << movieName << right << setw(9) << "|" << endl;
+		movieNames.push_back(movieName);  // Store for later use
+		index++;
+	}
+
+	cout << right << setw(37) << "|" << setw(35) << "|" << endl;
+	cout << setw(37) << "" << setw(34) << setfill('-') << "" << setfill(' ') << endl;
+
+	cout << endl << setw(39) << "" << "[0] Return" << endl;
+	cout << "\n" << setw(37) << "" << "Please select your movie (0-" << eachMovies.size() << "): ";
+	cin >> movieNum;
+
+	while (cin.fail() || movieNum > eachMovies.size() || movieNum < 0) {
+		clearBuff();
+		cout << "\n" << setw(37) << "" << "You can only enter one digit (0 - " << eachMovies.size() << ")." << endl;
+		cout << setw(37) << "" << "Please select your movie: ";
+		cin >> movieNum;
+	}
+
+	if (movieNum == 0) {
+		UserMenu();  // Go back to previous menu
+		return;
+	}
+
+	SelectedMovieName = movieNames[movieNum - 1];
+
+	int movieIndex = MovieShowTime(SelectedMovieName, SelectedMovieId, SelectedStartTime, MovieHall);
+
+	// Confirm movie selection
+	cls();
+	cout << setw(37) << "" << setw(35) << setfill('=') << "" << setfill(' ') << endl;
+	cout << setw(37) << "" << "*    MOVIE SELECT CONFIRMATION    *" << endl;
+	cout << setw(37) << "" << setw(35) << setfill('=') << "" << setfill(' ') << endl;
+
+	cout << endl << setw(35) << "" << "Movie ID: " << setw(29) << movie[movieIndex].movieId << endl;
+	cout << setw(35) << "" << "Movie Name: " << setw(27) << movie[movieIndex].movieName << endl;
+	cout << setw(35) << "" << "Movie Start at: " << setw(23) << movie[movieIndex].startTime << endl;
+
+	cout << "\n" << setw(35) << "" << "Enter (Y) to confirm, or (N) to cancel." << endl;
+	cout << endl;
+	string select = Checking();
+
+	if (select == "Y") {
+		MovieCart(movieIndex);  // Proceed with the movie selection
+	}
+	else {
+		MovieMenu();  // Go back to the movie menu
+	}
+
+}
+
+// Get payment menthod
+string PaymentProcess() {
+
+	string methods;
+	int choice;
+	string username;
+	string contact;
+	int mem_id, valid = 0;
+
+
+	cout << endl << setw(40) << "" << "Select your payment methods." << endl;
+	cout << endl << setw(40) << "" << "1. Ewallet " << endl;
+	cout << setw(40) << "" << "2. Debit card " << endl;
+	cout << setw(40) << "" << "3. Credit card " << endl;
+	cout << setw(40) << "" << "4. Cash " << endl;
+
+	cout << endl << setw(40) << "" << "Select: ";
+	cin >> choice;
+
+	while (cin.fail() || choice < 1 || choice > 4) {
+		clearBuff();
+		cout << endl << setw(40) << "" << "(!) Invalid input" << endl;
+		cout << setw(40) << "" << "Select your payment methods." << endl;
+		cout << endl << setw(40) << "" << "Select: ";
+		cin >> choice;
+	}
+
+
+	switch (choice) {
+
+	case 1:
+		methods = "Ewallet";
+		break;
+
+	case 2:
+		methods = "Debit card";
+		break;
+
+	case 3:
+		methods = "Credit card";
+		break;
+
+	default:
+		methods = "Cash";
+		break;
+	}
+
+
+	return methods;
+
+}
+
+// Uses to generate unique invoice number with letter
+string generateInvoiceNumber(int salesIndex) {
+
+
+	// Determine the alphabet letter (A-Z) for every 20 orders
+	char letternum = 'A' + ((salesIndex + 1) / 20) % 26;
+
+	// Format invoice number with the letter
+	ostringstream invnum;
+	invnum << letternum << setw(5) << setfill('0') << (salesIndex + 1);
+
+	// Combine date and formatted invoice number
+	string formattedInvoiceNum = invnum.str();
+	return formattedInvoiceNum;
+}
+
+// Invoice that handle movie tickets only
+void Invoice(int movieIndex, TicketOrder order) {
+
+
+	string username;
+	string contact;
+	int choice;
+	double TotalPrice, TotalOrderprice, SST;
+	localtime_s(&localTime, &now); // Convert to local time format using localtime_s
+
+	int vip = membership();
+
+	cout << endl << setw(40) << "" << " ------------------------" << endl;
+	cout << setw(40) << "" << "* Verification completed *" << endl;
+	cout << setw(40) << "" << " ------------------------" << endl;
+
+	cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+	clearBuff(); // ignore memory buffer or else it will run error message 
+	getline(cin, username);
+
+	while (username.empty() || username.find_first_not_of(' ') == string::npos) {  // loop when input is empty or just space
+		cout << endl << setw(30) << "" << "(X) No name detected. This field can't be blank " << endl;
+		cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+		getline(cin, username);
+	}
+
+	cout << endl << setw(39) << "" << "Contact Number: ";
+	cin >> contact;
+
+	// all_of: This function checks whether all elements in a range satisfy a particular condition
+	while (contact.length() != 10 || !all_of(contact.begin(), contact.end(), ::isdigit)) {
+		clearBuff();
+		cout << endl << setw(23) << "" << "(!) Invalid input. Please enter the CORRECT FORMAT of phone number." << endl;
+		cout << endl << setw(37) << "" << "Enter: ";
+		cin >> contact;
+	}
+
+	cout << endl << setw(27) << "" << "Directing to [Invoice] Press (any key) to proceed...";
+	cin.get();
+	cin.get();
+
+	cls();
+	cout << setw(45) << "" << " ------------------ " << endl;
+	cout << setw(45) << "" << "|   Your Invoice   |" << endl;
+	cout << setw(45) << "" << " ------------------" << endl;
+
+	cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << setw(34) << "|" << setw(4) << "" << "Order Summary for : " << left << setw(14) << username << right << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "> Movie you have selected:" << setw(13) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Movie ID: " << setw(24) << movie[movieIndex].movieId << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Movie Name: " << setw(22) << movie[movieIndex].movieName << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Movie Start at: " << setw(18) << movie[movieIndex].startTime << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Movie Hall: " << setw(22) << movie[movieIndex].hall << setw(5) << "|" << endl;
+
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Total tickets ordered: " << left << setw(2) << order.totalTickets << right << setw(14) << "|" << endl;
+	cout << setw(34) << "|" << setw(4) << "" << "Seats reserved:" << setw(24) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+
+	for (int i = 0; i < order.totalTickets; ++i) {
+		cout << right << setw(34) << "|" << setw(4) << "" << " * Ticket: " << setw(5) << (i + 1) << ") " << left << setw(3) << order.seats[i]
+			<< right << setw(18) << "|" << endl;
+	}
+
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Total Tickets Price (RM):" << setw(9) << setprecision(2) << fixed << order.totalticketprice
+		<< right << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+
+	SST = order.totalticketprice * 0.08;
+
+	if (vip == 1) {
+		TotalOrderprice = (order.totalticketprice + SST) * 0.9;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+	}
+	else {
+		TotalOrderprice = order.totalticketprice + SST;
+	}
+
+
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# Total Price (RM): " << setw(14) << setprecision(2) << fixed << order.totalticketprice << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# Summary Price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+
+
+
+	cout << endl << setw(36) << "" << "Enter any key to proceed to [Payment]..";
+	cin.get();
+
+
+	string method = PaymentProcess();
+	string invoiceNumber = generateInvoiceNumber(salesIndex); // call function to create invoice number
+
+	if (method == "Cash") {
+		cout << endl << setw(33) << "" << "[ Invoice printed ]" << endl;
+		cout << setw(33) << "" << "# Payment method: " << method << endl;
+		cout << setw(33) << "" << "# Please go to the counter to done payment." << endl;
+
+	}
+
+	else {
+		cls();
+		cout << setw(45) << "" << " ****************** " << endl;
+		cout << setw(45) << "" << " *  Your Receipt  *" << endl;
+		cout << setw(45) << "" << " ******************  " << endl;
+
+		// print invoice number , customer name and current date
+		cout << endl << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Invoice Number : " << invoiceNumber << setw(16) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "|" << setw(4) << "" << "Order Summary for :" << left << setw(15) << username << right << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Current Date : " << 1900 + localTime.tm_year << " - "
+
+			<< setw(2) << setfill('0') << 1 + localTime.tm_mon << " - "
+
+			<< setw(2) << setfill('0') << localTime.tm_mday << setfill(' ') << setw(10) << "|" << endl;
+
+
+		// movie
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "> Movie you have selected:" << setw(13) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie ID: " << setw(24) << movie[movieIndex].movieId << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Name: " << setw(22) << movie[movieIndex].movieName << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Start at: " << setw(18) << movie[movieIndex].startTime << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Hall: " << setw(22) << movie[movieIndex].hall << setw(5) << "|" << endl;
+
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total tickets ordered: " << left << setw(2) << order.totalTickets << right << setw(14) << "|" << endl;
+		cout << setw(34) << "|" << setw(4) << "" << "Seats reserved:" << setw(24) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+
+
+		for (int i = 0; i < order.totalTickets; ++i) {
+			cout << right << setw(34) << "|" << setw(4) << "" << " * Ticket: " << setw(5) << (i + 1) << ") " << left << setw(3) << order.seats[i]
+				<< right << setw(18) << "|" << endl;
+		}
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total Tickets Price (RM):" << setw(9) << setprecision(2) << fixed << order.totalticketprice
+			 << right << setw(5)  << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+
+		if (vip == 1) {
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+		}
+
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Total Price (RM): " << setw(14) << setprecision(2) << fixed << order.totalticketprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Summary Price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Payment Method: " << setw(16) << method << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+
+		cout << setw(38) << "" << "Receipt have printed please collect." << endl;
+
+	}
+
+	customerList[salesIndex].username = username;
+	customerList[salesIndex].contact = contact;
+	customerList[salesIndex].methods = method;
+	customerList[salesIndex].totalprice = TotalOrderprice;
+	customerList[salesIndex].invoicenum = invoiceNumber;
+	customerList[salesIndex].orderDate = localTime;
+
+	salesIndex++;
+
+	cout << endl << setw(36) << "" << "Enter (any) keys to proceed to main page" << endl;
+	cin.get();
+	cin.get();
+	UserLogin();
+
+
+
+}
+
+// Invoice that handle food only
+void Invoice(FoodOrder foodOrder[], int foodIndex) {
+
+	cls();
+	int choice;
+	string username;
+	string contact;
+	double Totalfoodprice = 0, SST, TotalOrderprice;
+	localtime_s(&localTime, &now); // Convert to local time format using localtime_s
+
+	int vip = membership();
+
+	cls();
+	cout << setw(40) << "" << " ------------------------" << endl;
+	cout << setw(40) << "" << "* Verification completed *" << endl;
+	cout << setw(40) << "" << " ------------------------" << endl;
+
+	cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+	clearBuff();// ignore memory buffer or else it will run error message 
+	getline(cin, username);
+
+	while (username.empty() || username.find_first_not_of(' ') == string::npos) {  // loop when input is empty or just space
+		cout << endl << setw(30) << "" << "(X) No name detected. This field can't be blank " << endl;
+		cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+		getline(cin, username);
+	}
+
+	cout << endl << setw(39) << "" << "Contact Number: ";
+	cin >> contact;
+
+	// all_of: This function checks whether all elements in a range satisfy a particular condition
+	while (contact.length() != 10 || !all_of(contact.begin(), contact.end(), ::isdigit)) {
+		clearBuff();
+		cout << endl << setw(23) << "" << "(!) Invalid input. Please enter the CORRECT FORMAT of phone number." << endl;
+		cout << endl << setw(37) << "" << "Enter: ";
+		cin >> contact;
+	}
+
+	cout << endl << setw(27) << "" << "Directing to [Invoice] Press (any key) to proceed...";
+	cin.get();
+	cin.get();
+
+
+	cls();
+	cout << setw(45) << "" << " ------------------ " << endl;
+	cout << setw(45) << "" << "|   Your Invoice   |" << endl;
+	cout << setw(45) << "" << " ------------------" << endl;
+
+	cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << setw(34) << "|" << setw(4) << "" << "Order Summary for : " << left << setw(14) << username << right << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+
+	cout << right << setw(34) << "|" << setw(4) << "" << "> Food and Beverage Section:" << setw(11) << "|" << endl;
+	for (int x = 0; x < foodIndex; x++) {
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Order No: " << setw(24) << x + 1 << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Item Name: " << setw(23) << foodOrder[x].name << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Item Quantity: " << setw(19) << foodOrder[x].quantity << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Item Price (RM): " << setw(17) << fixed << setprecision(2) << foodOrder[x].Price << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total (RM):" << setw(23) << fixed << setprecision(2) << foodOrder[x].Total << setw(5) << "|" << endl;
+		Totalfoodprice += foodOrder[x].quantity * foodOrder[x].Price;
+	}
+
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "Total Food Price (RM):" << setw(12) << Totalfoodprice << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+
+	//calculation
+	SST = Totalfoodprice * 0.08;
+
+	if (vip == 1) {
+		TotalOrderprice = (Totalfoodprice + SST) * 0.9;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+	}
+	else {
+		TotalOrderprice = Totalfoodprice + SST;
+	}
+
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# Total Price (RM): " << setw(14) << setprecision(2) << fixed << Totalfoodprice << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(4) << "" << "# Summary Price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+	cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+
+	cout << endl << setw(36) << "" << "Enter any key to proceed to [Payment]..";
+	cin.get();
+
+
+	string method = PaymentProcess();
+	string invoiceNumber = generateInvoiceNumber(salesIndex);
+
+	if (method == "Cash") {
+
+		cout << endl << setw(33) << "" << "[ Invoice printed ]" << endl;
+		cout << setw(33) << "" << "# Payment method: " << method << endl;
+		cout << setw(33) << "" << "# Please go to the counter to done payment." << endl;
+	}
+
+	else {
+
+		cls();
+
+		cout << setw(45) << "" << " ****************** " << endl;
+		cout << setw(45) << "" << " *  Your Receipt  *" << endl;
+		cout << setw(45) << "" << " ******************  " << endl;
+
+		cout << endl << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Invoice Number : " << invoiceNumber << setw(16) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "|" << setw(4) << "" << "Order Summary for :" << left << setw(15) << username << right << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Current Date : " << 1900 + localTime.tm_year << " - "
+
+			<< setw(2) << setfill('0') << 1 + localTime.tm_mon << " - "
+
+			<< setw(2) << setfill('0') << localTime.tm_mday << setfill(' ') << setw(10) << "|" << endl;
+
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "> Food and Beverage Section:" << setw(11) << "|" << endl;
+
+		for (int x = 0; x < foodIndex; x++) {
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Order No: " << setw(24) << x + 1 << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Name: " << setw(23) << foodOrder[x].name << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Quantity: " << setw(19) << foodOrder[x].quantity << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Price (RM): "
+				<< setw(17) << fixed << setprecision(2) << foodOrder[x].Price << setw(5) << "|" << endl;
+
+
+		
+		}
+
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total Food Price (RM):" << setw(12) << Totalfoodprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+
+		cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+
+		if (vip == 1) {
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+		}
+
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Total Price (RM): " << setw(14) << setprecision(2) << fixed << Totalfoodprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Summary Price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Payment Method: " << setw(16) << method << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+
+		cout << setw(38) << "" << "Receipt have printed please collect." << endl;
+
+	}
+
+	customerList[salesIndex].username = username;
+	customerList[salesIndex].contact = contact;
+	customerList[salesIndex].methods = method;
+	customerList[salesIndex].totalprice = TotalOrderprice;
+	customerList[salesIndex].invoicenum = invoiceNumber;
+	customerList[salesIndex].orderDate = localTime;
+
+
+
+	salesIndex++;
+
+	cout << endl << setw(36) << "" << "Enter (any) keys to proceed to main page" << endl;
+	cin.get();
+	cin.get();
+	UserLogin();
+
+
+
+}
+
+// Invoice that handle food and movie tickets
+void Invoice(int movieIndex, TicketOrder order, FoodOrder foodOrder[], int foodIndex) {
+
+
+	int choice;
+	string username;
+	string contact;
+	double Totalprice = 0, Totalfoodprice = 0, TotalOrderprice, SST;
+	localtime_s(&localTime, &now); // Convert to local time format using localtime_s
+
+	int vip = membership();
+
+	cls();
+	cout << setw(40) << "" << " ------------------------" << endl;
+	cout << setw(40) << "" << "* Verification completed *" << endl;
+	cout << setw(40) << "" << " ------------------------" << endl;
+
+	cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+	clearBuff(); // ignore memory buffer or else it will run error message 
+	getline(cin, username);
+
+	while (username.empty() || username.find_first_not_of(' ') == string::npos) {  // loop when input is empty or just space
+		cout << endl << setw(30) << "" << "(X) No name detected. This field can't be blank " << endl;
+		cout << endl << setw(39) << "" << "Enter your Nickname here: ";
+		getline(cin, username);
+	}
+
+	cout << endl << setw(39) << "" << "Contact Number: ";
+	cin >> contact;
+
+	while (contact.length() != 10 || !all_of(contact.begin(), contact.end(), ::isdigit)) {
+		clearBuff();
+		cout << endl << setw(23) << "" << "(!) Invalid input. Please enter the CORRECT FORMAT of phone number." << endl;
+		cout << endl << setw(37) << "" << "Enter: ";
+		cin >> contact;
+	}
+
+	cout << endl << setw(27) << "" << "Directing to [Invoice] Press (any key) to proceed...";
+	cin.get();
+	cin.get();
+
+	cls();
+		cout << setw(45) << "" << " ------------------ " << endl;
+		cout << setw(45) << "" << "|   Your Invoice   |" << endl;
+		cout << setw(45) << "" << " ------------------" << endl;
+	
+		cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "|" << setw(4) << "" << "Order Summary for : " << left << setw(14) << username << right << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "> Movie you have selected:" << setw(13) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie ID: " << setw(24) << movie[movieIndex].movieId << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Name: " << setw(22) << movie[movieIndex].movieName << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Start at: " << setw(18) << movie[movieIndex].startTime << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Movie Hall: " << setw(22) << movie[movieIndex].hall << setw(5) << "|" << endl;
+	
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total tickets ordered: " << left << setw(2) << order.totalTickets << right << setw(14) << "|" << endl;
+		cout << setw(34) << "|" << setw(4) << "" << "Seats reserved:" << setw(24) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+	
+		for (int i = 0; i < order.totalTickets; ++i) {
+			cout << right << setw(34) << "|" << setw(4) << "" << " * Ticket: " << setw(5) << (i + 1) << ") " << left << setw(3) << order.seats[i]
+				<< right << setw(18) << "|" << endl;
+		}
+	
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total Tickets Price (RM):" << setw(9) << setprecision(2) << fixed << order.totalticketprice
+			<< right << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+	
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "> Food and Beverage Section:" << setw(11) << "|" << endl;
+		for (int x = 0; x < foodIndex; x++) {
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Order No: " << setw(24) << x + 1 << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Name: " << setw(23) << foodOrder[x].name << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Quantity: " << setw(19) << foodOrder[x].quantity << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Item Price (RM): " << setw(17) << fixed << setprecision(2) << foodOrder[x].Price << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Total (RM):" << setw(23) << fixed << setprecision(2) << foodOrder[x].Total << setw(5) << "|" << endl;
+			Totalfoodprice += foodOrder[x].quantity * foodOrder[x].Price;
+		}
+	
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "Total Food Price (RM):" << setw(12) << Totalfoodprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+	
+	
+		//Calculation
+		Totalprice = Totalfoodprice + order.totalticketprice;
+		SST = Totalprice * 0.08;
+	
+		if (vip == 1) {
+			TotalOrderprice = (Totalprice + SST) * 0.9;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+		}
+		else {
+			TotalOrderprice = Totalprice + SST;
+		}
+	
+	
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Total price (RM): " << setw(14) << setprecision(2) << fixed << Totalprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(4) << "" << "# Summary price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+		cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+		cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+	
+	
+		cout << endl << setw(36) << "" << "Enter any key to proceed to [Payment]..";
+		cin.get();
+	
+	
+	
+		string method = PaymentProcess();
+		string invoiceNumber = generateInvoiceNumber(salesIndex);
+	
+		if (method == "Cash") {
+	
+			cout << endl << setw(33) << "" << "[ Invoice printed ]" << endl;
+			cout << setw(33) << "" << "# Payment method: " << method << endl;
+			cout << setw(33) << "" << "# Please go to the counter to done payment." << endl;
+		}
+	
+		else {
+			cls();
+
+
+			cout << setw(45) << "" << " ****************** " << endl;
+			cout << setw(45) << "" << " *  Your Receipt  *" << endl;
+		    cout << setw(45) << "" << " ******************  " << endl;
+			
+			cout << endl << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Invoice Number : " << invoiceNumber << setw(16) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << setw(34) << "|" << setw(4) << "" << "Order Summary for :" << left << setw(15) << username << right << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Current Date : " << 1900 + localTime.tm_year << " - "
+			
+				<< setw(2) << setfill('0') << 1 + localTime.tm_mon << " - "
+			
+				<< setw(2) << setfill('0') << localTime.tm_mday << setfill(' ') << setw(10) << "|" << endl;
+					
+					//movie
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "> Movie you have selected:" << setw(13) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Movie ID: " << setw(24) << movie[movieIndex].movieId << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Movie Name: " << setw(22) << movie[movieIndex].movieName << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Movie Start at: " << setw(18) << movie[movieIndex].startTime << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Movie Hall: " << setw(22) << movie[movieIndex].hall << setw(5) << "|" << endl;
+			
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Total tickets ordered: " << left << setw(2) << order.totalTickets << right << setw(14) << "|" << endl;
+			cout << setw(34) << "|" << setw(4) << "" << "Seats reserved:" << setw(24) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			
+			
+			
+			for (int i = 0; i < order.totalTickets; ++i) {
+				cout << right << setw(34) << "|" << setw(4) << "" << " * Ticket: " << setw(5) << (i + 1) << ") " << left << setw(3) << order.seats[i]
+					 << right << setw(18) << "|" << endl;
+			}
+
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Total Tickets Price (RM):" << setw(9) << setprecision(2) << fixed << order.totalticketprice
+				<< right << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+			
+			
+			
+			// Food
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "> Food and Beverage Section:" << setw(11) << "|" << endl;
+			
+			for (int x = 0; x < foodIndex; x++) {
+					cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+					cout << right << setw(34) << "|" << setw(4) << "" << "Order No: " << setw(24) << x + 1 << setw(5) << "|" << endl;
+					cout << right << setw(34) << "|" << setw(4) << "" << "Item Name: " << setw(23) << foodOrder[x].name << setw(5) << "|" << endl;
+					cout << right << setw(34) << "|" << setw(4) << "" << "Item Quantity: " << setw(19) << foodOrder[x].quantity << setw(5) << "|" << endl;
+					cout << right << setw(34) << "|" << setw(4) << "" << "Item Price (RM): "
+						 << setw(17) << fixed << setprecision(2) << foodOrder[x].Price << setw(5) << "|" << endl;
+		
+					
+			}
+
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "Total Food Price (RM):" << setw(12) << Totalfoodprice << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			
+			cout << right << setw(34) << "|" << setw(4) << "" << setw(34) << setfill('.') << "" << setfill(' ') << setw(5) << "|" << endl;
+
+			if (vip == 1) {
+				cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+				cout << right << setw(34) << "|" << setw(4) << "" << "[10% member discount has applied.]" << setw(5) << "|" << endl;
+			}
+			
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "# Total price (RM): " << setw(14) << setprecision(2) << fixed << Totalprice << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "# [8%] SST (RM): " << setprecision(2) << setw(17) << fixed << SST << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "# Summary price (RM): " << setw(12) << TotalOrderprice << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(4) << "" << "# Payment method: " << setw(16) << method << setw(5) << "|" << endl;
+			cout << right << setw(34) << "|" << setw(43) << "|" << endl;
+			cout << setw(34) << "" << setw(42) << setfill('-') << "" << setfill(' ') << endl;
+			
+			cout << setw(38) << "" << "Receipt have printed please collect." << endl;
+			
+			
+		}
+			
+			customerList[salesIndex].username = username;
+			customerList[salesIndex].contact = contact;
+			customerList[salesIndex].methods = method;
+			customerList[salesIndex].totalprice = TotalOrderprice;
+			customerList[salesIndex].invoicenum = invoiceNumber;
+			customerList[salesIndex].orderDate = localTime;
+			
+			
+			salesIndex++;
+			cout << endl << setw(36) << "" << "Enter (any) keys to proceed to main page" << endl;
+			cin.get();
+			cin.get();
+			UserLogin();
+				
+			}
+
+// Sales report that handle daily , monthly and yearly
+void SalesReport() {
+
+	int month, year, valid = 0;
+	int startDay, startMonth, startYear, endDay, endMonth, endYear;
+	string ans;
+	localtime_s(&localTime, &now);
+
+	cls();
+	do {
+
+		bool foundRecord = false;  // Record checking purpose
+		double monthlyTotal = 0.0, monthlySales = 0.0;
+
+		// The starting date, month and year input section
+		cls();
+		cout << setw(39) << "" << setw(1) << " -------------------------- " << endl;
+		cout << setw(39) << "" << setw(1) << "|       Sales Report       |" << endl;
+		cout << setw(39) << "" << setw(1) << " -------------------------- " << endl;
+		cout << endl << setw(45) << "" << "[ Return (99) ]" << endl;
+
+		cout << endl;
+		cout << setw(34) << "" << "Enter the Start Date (day/month/year)" << endl;
+		cout << setw(34) << "" << "(Record starts from 2024)" << endl;
+
+		cout << endl;
+		cout << setw(34) << "" << "Start Day (1-31): " << right << setw(16) << ""; //////////// date input
+		cin >> startDay;
+
+		if (gobacktostaff(startDay)) return; // if '99' then return staff menu
+
+		while (startDay < 1 || startDay > 31 || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid Date input. Try again." << endl;
+			cout << setw(34) << "" << "Start Day (1-31): " << right << setw(16) << "";
+			cin >> startDay;
+			if (gobacktostaff(startDay)) return; // if '99' then return staff menu
+		}
+
+
+		cout << setw(34) << "" << "Start Month (1-12): " << setw(14) << "";  //////////// month input
+		cin >> startMonth;
+		if (gobacktostaff(startMonth)) return; // if '99' then return staff menu
+
+		while (startMonth < 1 || startMonth > 12 || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid Month input. Try again." << endl;
+			cout << setw(34) << "" << "Start Month (1-12): " << setw(14) << "";
+			cin >> startMonth;
+			if (gobacktostaff(startMonth)) return; // if '99' then return staff menu
+		}
+
+		cout << endl;
+		cout << setw(34) << "" << "Start Year: " << setw(20) << ""; /////////// year input
+		cin >> startYear;
+		if (gobacktostaff(startYear)) return; // if '99' then return staff menu
+
+		while (startYear > (1900 + localTime.tm_year) || startYear < 2022 || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid year input. Please try again." << endl;
+			cout << setw(34) << "" << "Start Year: " << setw(20) << "";
+			cin >> startYear;
+			if (gobacktostaff(startYear)) return; // if '99' then return staff menu
+		}
+
+
+		// ending for date, month, year input section
+		cls();
+		cout << setw(39) << "" << setw(1) << " -------------------------- " << endl;
+		cout << setw(39) << "" << setw(1) << "|       Sales Report       |" << endl;
+		cout << setw(39) << "" << setw(1) << " -------------------------- " << endl;
+
+		cout << endl;
+		cout << setw(34) << "" << "Enter the End Date (day/month/year)" << endl;
+		cout << setw(34) << "" << "End Day (1-31): " << setw(16) << "";
+		cin >> endDay;
+
+		if (gobacktostaff(endDay)) return; // if '99' then return staff menu
+
+		while (endDay < 1 || endDay > 31 || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid Date input. Try again." << endl;
+			cout << setw(34) << "" << "End Day (1-31): " << setw(16) << "";
+			cin >> endDay;
+			if (gobacktostaff(endDay)) return; // if '99' then return staff menu
+		}
+
+		cout << setw(34) << "" << "End Month (1-12): " << setw(14) << "";
+		cin >> endMonth;
+		if (gobacktostaff(endMonth)) return; // if '99' then return staff menu
+
+		while (endMonth < 1 || endMonth > 12 || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid Month input. Try again." << endl;
+			cout << setw(34) << "" << "End Month (1-12): " << setw(14) << "";
+			cin >> endMonth;
+			if (gobacktostaff(endMonth)) return; // if '99' then return staff menu
+		}
+
+
+		cout << endl;
+		cout << setw(34) << "" << "End Year: " << setw(20) << "";
+		cin >> endYear;
+		if (gobacktostaff(endYear)) return; // if '99' then return staff menu
+
+		while (endYear > (1900 + localTime.tm_year) || endYear < startYear || cin.fail()) {
+			clearBuff();
+			cout << endl;
+			cout << setw(34) << "" << "(!) Invalid year input. Please try again." << endl;
+			cout << setw(34) << "" << "Make sure your date is in correct order." << endl;
+			cout << setw(34) << "" << "End Year: " << setw(20) << "";
+			cin >> endYear;
+			if (gobacktostaff(endYear)) return; // if '99' then return staff menu
+		}
+
+		// Record the date range
+		tm startDate = { 0 };
+		startDate.tm_mday = startDay;
+		startDate.tm_mon = startMonth - 1;
+		startDate.tm_year = startYear - 1900;
+
+		tm endDate = { 0 };
+		endDate.tm_mday = endDay;
+		endDate.tm_mon = endMonth - 1;
+		endDate.tm_year = endYear - 1900;
+
+		time_t start_time = mktime(&startDate);
+		time_t end_time = mktime(&endDate);
+
+		cls();
+		cout << setw(39) << "" << " -------------------------- " << endl;
+		cout << setw(39) << "" << "|       Sales Report       |" << endl;
+		cout << setw(39) << "" << " -------------------------- " << endl;
+		cout << endl;
+
+		// Table heading
+		cout << endl << setw(3) << "" << setw(107) << setfill('-') << "" << setfill(' ') << endl;
+		cout << setw(2) << "" << "| No." << setw(2) << "|"
+			<< setw(14) << "Username" << setw(7) << "|"
+			<< setw(13) << "Contact" << setw(7) << "|"
+			<< setw(12) << "Method" << setw(7) << "|"
+			<< setw(19) << "Total Price (RM)" << setw(2) << "|"
+			<< setw(12) << "Date" << setw(9) << "|" << endl;
+		cout << setw(2) << "" << " " << setw(107) << setfill('-') << "" << setfill(' ') << endl;
+
+		for (int i = 0; i < MAX_SALES; i++) {
+
+			tm recordDate = customerList[i].orderDate; // Create a tm struct for the current record date
+			recordDate.tm_hour = 0;
+			recordDate.tm_min = 0;
+			recordDate.tm_sec = 0;
+			time_t record_time = mktime(&recordDate); // Convert record date to time_t for comparison
+
+			// Check if the record falls within the selected date range
+			if (record_time >= start_time && record_time <= end_time) {
+				foundRecord = true;
+				monthlyTotal += customerList[i].totalprice;
+				cout << setw(2) << "" << "|" << setw(5) << (i + 1) << "|"
+					<< setw(20) << customerList[i].username << "|"
+					<< setw(19) << customerList[i].contact << "|"
+					<< setw(18) << customerList[i].methods << "|"
+					<< setw(20) << fixed << setprecision(2) << customerList[i].totalprice << "|"
+					<< setw(10) << "" << setw(2) << setfill('0') << customerList[i].orderDate.tm_mday << "/"
+					<< setw(2) << setfill('0') << (customerList[i].orderDate.tm_mon + 1) << "/"
+					<< setw(4) << customerList[i].orderDate.tm_year + 1900 << setfill(' ') << "|" << endl;
+			}
+		}
+		cout << setw(2) << "" << " " << setw(107) << setfill('-') << "" << setfill(' ') << endl;
+
+
+		if (!foundRecord) {
+			cout << setw(44) << "" << "[ No record found. ]" << endl;
+		}
+
+		monthlySales = monthlyTotal * 0.92;
+		cout << endl;
+		cout << setw(39) << "" << "[ From: " << startDay << "/" << startMonth << "/" << startYear
+			<< " To: " << endDay << "/" << endMonth << "/" << endYear << " ]" << endl;
+
+		cout << endl;
+		cout << setw(34) << "" << "> Sales Summary: " << setw(18) << fixed << setprecision(2) << "RM" << monthlyTotal << endl;
+		cout << setw(34) << "" << "> Total Sales (without SST): " << setw(6) << fixed << setprecision(2) << "RM" << monthlySales << endl;
+
+		cout << endl;
+		cout << setw(40) << "" << "Continue checking?" << endl;
+		cout << setw(40) << "" << "[Y] Yes - Continue" << endl;
+		cout << setw(40) << "" << "[N] No  - Back to report menu" << endl;
+		cout << endl;
+		string select = Checking();
+
+		if (select == "Y") {
+			valid = 1;
+		}
+		else {
+			staffmenu();
+		}
+
+	} while (valid == 1);
+}
+
+// check movie id is existed anot
+bool movieIdchecking(string MovieId, set<string> usedIds) {
+	
+		if (usedIds.count(MovieId) > 0) { // count is the movie id more than 0, one or more mean used
+			return true; // ID already used while adding movie id
+		}
+	
+		for (int i = 0; i < movie.size(); i++) if (movie[i].movieId == MovieId) {         // Compare MovieId with existing id
+			return true;     // ID already exists
+		}
+	
+		return false;
+	
+	};
+
+// Do customer order verification 
+void CustCheckin() {
+
+	string invoicenum;
+	int valid = 1;
+	bool invfound = false;
+	do {
+		cls(); // Clear the screen
+		cout << setw(39) << "" << setw(1) << " -------------------------" << endl;
+		cout << setw(39) << "" << setw(1) << "|    Customer Check-in    |" << endl;
+		cout << setw(39) << "" << setw(1) << " -------------------------" << endl;
+
+		cout << endl;
+		cout << setw(34) << "" << "Enter Invoice number for verification" << endl;
+		cout << setw(34) << "" << "Invoice Number: ";
+		cin >> invoicenum;
+
+		while (cin.fail()) {
+			clearBuff();
+			cout << endl << setw(45) << "" << "Incorrect Input. Try again.";
+			cout << endl << setw(45) << "" << "Enter Invoice number for verification: ";
+			cin >> invoicenum;
+		}
+
+		bool invfound = false;
+
+		for (int i = 0; i < MAX_SALES; i++) {
+			if (invoicenum == customerList[i].invoicenum) {
+				invfound = true;
+
+
+				cout << endl << setw(33) << "" << "[ Invoice Number Found ]" << endl;
+				cout << setw(33) << " " << setw(41) << setfill('-') << "" << setfill(' ') << endl;
+
+				cout << setw(32) << "" << "|" << setw(17) << "Invoice Number" << setw(3) << "|"
+					<< setw(20) << customerList[i].invoicenum << " |" << endl;
+				cout << setw(33) << " " << setw(41) << setfill('-') << "" << setfill(' ') << endl;
+
+				cout << setw(32) << "" << "|" << setw(16) << "Customer Name" << setw(4) << "|"
+					<< setw(20) << customerList[i].username << " |" << endl;
+				cout << setw(33) << " " << setw(41) << setfill('-') << "" << setfill(' ') << endl;
+
+				cout << setw(32) << "" << "|" << setw(15) << "Order Date" << setw(5) << "|"
+					<< setw(10) << "" << setw(2) << setfill('0') << customerList[i].orderDate.tm_mday << "/"
+					<< setw(2) << setfill('0') << (customerList[i].orderDate.tm_mon + 1) << "/"
+					<< setw(4) << customerList[i].orderDate.tm_year + 1900 << setfill(' ') << " |" << endl;
+
+				cout << setw(33) << " " << setw(41) << setfill('-') << "" << setfill(' ') << endl;
+			}
+		}
+
+		if (!invfound) {
+			cout << endl << setw(39) << "" << "[ Not Found Invoice Number ]" << endl;
+		}
+
+		cout << endl << setw(32) << "" << "Do you want to continue?" << endl;
+		cout << setw(32) << "" << "[Y] Yes - Continue" << endl;
+		cout << setw(32) << "" << "[N] No  - Back to report menu" << endl;
+		cout << endl;
+
+		string select = Checking();
+
+		if (select == "Y") {
+			valid = 1;
+		}
+		else {
+			staffmenu();
+		}
+
+	} while (valid == 1);
+}
+
+// replace movie
+void MovieUpdate() {
+
+	int valid;
+	string oldName, newName;
+
+	do {
+		valid = 0;
+		bool moviefound = false; // initializd movie not found
+
+		MovieList();
+		cout << endl << endl << setw(35) << "" << " --------------------------- " << endl;
+		cout << setw(35) << "" << "|       Movie Replace       |" << endl;
+		cout << setw(35) << "" << " --------------------------- " << endl;
+		cout << setw(39) << "" << "Press [99] to return." << endl;
+	
+		cout << endl << setw(34) << "" << "Movie you want to replace" << endl;
+		cout << setw(34) << "" << "Movie Name: ";
+		cin.ignore();
+		getline(cin, oldName);
+
+		if (checkForExit(oldName)) return; // check if it 99, yes then return to moviesettings
+
+		cout << endl << setw(34) << "" << "Replace with" << endl;
+		cout << setw(34) << "" << "Movie Name: ";
+		getline(cin, newName);
+
+		if (checkForExit(newName)) return; // check if it 99, yes then return to moviesettings
+
+		for (int i = 0; i < movie.size(); i++) {
+			if (movie[i].movieName == oldName) {
+
+				moviefound = true;
+				movie[i].movieName = newName;
+
+
+			}
+		}
+
+		if (!moviefound) {
+			cout << endl << setw(34) << "" << "Movie not found." << endl;
+			cout << setw(34) << "" << "Do you want to try again?" << endl;
+			cout << endl;
+
+			string select = Checking();
+			if (select == "Y") {
+				valid = 1;
+			}
+			else {
+				Moviesetting();
+			}
+		}
+
+	} while (valid == 1);
+
+	MovieList();
+	cout << endl << setw(43) << "" << "Movie updated" << endl;
+	cout << setw(36) << "" << "Press (any) key to continue";
+	cin.get();
+	Moviesetting();
+
+}
+
+// Adding Movie
+void AddMovie() {
+	string movieName;
+	string showTimes[3];
+	string movieId[3];
+	int hall[3];
+
+
+	StaffMovielist();
+
+	cout << endl << setw(40) << "" << " ------------------------"  << endl;
+	cout << setw(40) << "" << "|      Movie Update      |" << endl;
+	cout << setw(40) << "" << " ------------------------"  << endl;
+	cout << setw(43) << "" << "Press [99] to return." << endl;
+	cout << endl << setw(38) << "" << "New Movie Name: ";
+	cin.ignore();
+	getline(cin, movieName);
+
+	// Check for '99' to exit from the movie name input
+	if (checkForExit(movieName)) return;  // check if it 99, yes then return to moviesettings, no then continue
+
+	set<string> usedId;  // Store used movie IDs
+
+	for (int i = 0; i < 3; i++) {
+		cls();
+		cout << endl << endl << setw(36) << "" << "[ Movie Name : " << movieName << " ]" << endl;
+		cout << endl << setw(36) << "" << "[ Return(99) ]" << endl;
+
+		// Input for showtime
+		cout << endl << setw(30) << "" << "> Enter Showtime #" << (i + 1) << " (HHMM format): ";
+		cin >> showTimes[i];
+
+		
+		if (checkForExit(showTimes[i])) return;   // check if it 99, yes then return to moviesettings, no then continue
+
+		// Validation for showtimes
+		while (!isdigit || showTimes[i].length() != 4 || !isdigit(showTimes[i][0]) || !isdigit(showTimes[i][1]) ||
+			!isdigit(showTimes[i][2]) || !isdigit(showTimes[i][3]) ||
+			stoi(showTimes[i].substr(0, 2)) > 23 ||  // Check if hours are between 00 and 23
+			stoi(showTimes[i].substr(2, 2)) > 59) {  // Check if minutes are between 00 and 59
+
+			cout << endl << setw(30) << "" << "(X) Invalid Showtime." << endl;
+			cout << setw(30) << "" << "Please enter in HHMM format (00 - 23 for hours, 00 - 59 for minutes)" << endl;
+			cout << endl << setw(30) << "" << "> Enter Showtime #" << (i + 1) << " (HHMM format): ";
+			cin >> showTimes[i];
+
+			// Check for '99' again during validation loop
+			if (checkForExit(showTimes[i])) return;  // check if it 99, yes then return to moviesettings, no then continue
+		}
+
+	    // Movie ID input
+		cout << endl << setw(30) << "" << "> Enter Movie ID (MXXX format) for Showtime #" << (i + 1) << ": ";
+		cin >> movieId[i];
+
+		
+		if (checkForExit(movieId[i])) return;  // check if it 99, yes then return to moviesettings, no then continue
+
+		// Check Movie ID , can't have duplicate
+		while (movieId[i].length() != 4 || movieId[i][0] != 'M' || movieIdchecking(movieId[i], usedId)) {
+			cout << endl << setw(30) << "" << "(X) Invalid Movie ID. Please try again (MXXX format & non-exist)" << endl;
+			cout << endl << setw(30) << "" << "> Enter Movie ID (MXXX format) for Showtime #" << (i + 1) << ": ";
+			cin >> movieId[i];
+
+			// Check for '99' again during validation loop
+			if (checkForExit(movieId[i])) return;   // check if it 99, yes then return to moviesettings, no then continue
+		}
+
+		usedId.insert(movieId[i]);
+
+		// Input for hall
+		cout << endl << setw(30) << "" << "> Enter Hall (1-5) for Showtime #" << (i + 1) << ": ";
+		cin >> hall[i];
+
+		
+		string hallInput = to_string(hall[i]);
+		if (checkForExit(hallInput)) return;   // check if it 99, yes then return to moviesettings, no then continue
+
+		// Validation for hall
+		while (hall[i] < 1 || hall[i] > 5 || cin.fail()) {
+			clearBuff();
+			cout << endl << setw(30) << "" << "(X) Invalid Hall Number." << endl;
+			cout << endl << setw(30) << "" << "> Enter Hall (1-5) for Showtime #" << (i + 1) << ": ";
+			cin >> hall[i];
+
+			hallInput = to_string(hall[i]);
+			if (checkForExit(hallInput)) return;   // check if it 99, yes then return to moviesettings, no then continue
+		}
+	}
+
+	// Confirmation and add movie logic goes here
+	cout << endl << setw(30) << "" << "Movie update confirmation" << endl;
+	cout << setw(30) << "" << "Are you sure you want to add this new movie?" << endl;
+	cout << endl << setw(30) << "" << "[Y] Proceed to update" << endl;
+	cout << setw(30) << "" << "[N] Cancel current update, back to staff menu" << endl;
+	cout << endl;
+
+	string select = Checking();
+
+	if (select == "Y") {
+		for (int i = 0; i < 3; i++) {
+			movie.push_back({ movieId[i], movieName, showTimes[i], hall[i] });
+		}
+		cls();
+		cout << endl << setw(38) << "" << "Movie successfully added!" << endl;
+		cout << setw(36) << "" << "Press (any) key to continue..";
+		cin.get();
+		cin.get();
+		Moviesetting();
+	}
+	else {
+		cls();
+		cout << endl << setw(38) << "" << "Cancel Movie Update" << endl;
+		cout << setw(36) << "" << "Press (any) key to continue..";
+		Moviesetting();
+	}
+}
+
+// Delete Movie
+void RemoveMovie() {
+
+	string movieName;
+	bool movieFound = false;
+
+
+	StaffMovielist();
+
+	cout << endl << setw(41) << "" << " ------------------------" << endl;
+	cout << setw(41) << "" << "|      Remove Movie      |" << endl;
+	cout << setw(41) << "" << " ------------------------" << endl;
+	cout << setw(44) << "" << "Press [99] to return." << endl;
+	cout << endl;
+	cout << endl << setw(34) << "" << "Enter the Movie Name you want to remove" << endl;
+	cout << endl << setw(34) << "" << "Movie Name : ";
+	cin.ignore();  // To clear out any leftover input
+	getline(cin, movieName);
+
+	if (checkForExit(movieName)) return;
+
+	// Loop to find the movie and remove all its showtimes
+	for (int i = 0; i < movie.size(); i++) {
+		if (movie[i].movieName == movieName) {
+			movieFound = true;
+
+			cout << endl << setw(40) << "" << "Movie found: " << movie[i].movieName << endl; // Get comfirmaton from user
+			cout << endl << setw(24) << "" << "Are you sure you want to remove this movie and [All] its showtimes?" << endl;
+			cout << setw(24) << "" << "[Y] Yes" << endl;
+			cout << setw(24) << "" << "[N] No" << endl;
+			cout << endl;
+
+			string select = Checking();  // Function for input validation
+			if (select == "Y") {
+				// Erase all entries related to this movie
+				for (int j = 0; j < 3 && i < movie.size(); j++) {
+					movie.erase(movie.begin() + i);
+				}
+				cout << endl << setw(32) << "" << "Movie and its showtimes removed successfully!" << endl;
+				cout << setw(40) << "" << "Press (any) key to continue";
+				cin.get();
+				cin.get();
+				Moviesetting();
+			}
+			else {
+				cout << endl << setw(32) << "" << "Canceling removal. Returning to staff menu." << endl;
+				cout << setw(40) << "" << "Press (any) key to continue";
+				cin.get();
+				cin.get();
+				Moviesetting();  // Return to menu
+				return;
+			}
+			break;
+		}
+	}
+
+	if (!movieFound) {
+		cout << endl << setw(34) << "" << "(X) Movie not found in the list." << endl;
+		cout << setw(34) << "" << "Do you want to try again?" << endl;
+		cout << endl;
+		string select = Checking();
+		if (select == "Y") {
+			RemoveMovie();  // Retry if user wants
+		}
+		else {
+			Moviesetting();  // Return to menu
+		}
+	}
+}
+
+// Make Movie changes
+void Moviesetting() {
+
+	int choose, valid = 0;
+
+	// Display movielist
+	StaffMovielist();
+
+	cout << endl << setw(31) << " " << setw(47) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(31) << "|" << setw(34) << " ---------------------" << setw(14) << "|" << endl;
+	cout << setw(31) << "|" << setw(35) << "|    MOVIE SETTING    |" << setw(13) << "|" << endl;
+	cout << setw(31) << "|" << setw(34) << " ---------------------" << setw(14) << "|" << endl;
+
+	cout << setw(31) << "|" << setw(48) << "|" << endl;
+	cout << setw(31) << "|" << setw(27) << "1. Movie replace" << setw(21) << "|" << endl;
+	cout << setw(31) << "|" << setw(26) << "2. Update movie" << setw(22) << "|" << endl;
+	cout << setw(31) << "|" << setw(26) << "3. Delete movie" << setw(22) << "|" << endl;
+	cout << setw(31) << "|" << setw(20) << "0. Return" << setw(28) << "|" << endl;
+	cout << setw(31) << "|" << setw(48) << "|" << endl;
+
+	cout << setw(31) << " " << setw(47) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(46) << "Enter: ";
+	cin >> choose;
+
+	while (choose < 0 || choose > 3 || cin.fail()) {
+		clearBuff();
+
+		cout << endl << setw(37) << "" << "(!) Invalid input. Please try again." << endl;
+		cout << setw(39) << "" << "Enter: ";
+		cin >> choose;
+	}
+
+	switch (choose) {
+
+	case 1:
+		MovieUpdate();
+		break;
+
+	case 2:
+		AddMovie();
+		break;
+
+	case 3:
+		RemoveMovie();
+		break;
+
+	case 0:
+		staffmenu();
+		break;
+	}
+
+}
+
+// where user main menu
+void UserMenu() {
+	int foodIndex = 0;
+	FoodOrder foodOrder[MAX_ORDER];
+	Movie movieIndex;
+	int input;
+
+	cls();
+	cout << setw(30) << " " << setw(50) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(30) << "|" << setw(36) << " --------------------- " << setw(15) << "|" << endl;
+	cout << setw(30) << "|" << setw(36) << "|    CUSTOMER MENU    |" << setw(15) << "|" << endl;
+	cout << setw(30) << "|" << setw(36) << " --------------------- " << setw(15) << "|" << endl;
+
+	cout << setw(30) << "|" << setw(51) << "|" << endl;
+
+	cout << setw(30) << "|" << setw(41) << "Which program you like to access" << setw(10) << "|" << endl;
+
+	cout << setw(30) << "|" << setw(51) << "|" << endl;
+
+	cout << setw(30) << "|" << setw(25) << "1. Movie List" << setw(26) << "|" << endl;
+	cout << setw(30) << "|" << setw(35) << "2. Movie Select section" << setw(16) << "|" << endl;
+	cout << setw(30) << "|" << setw(41) << "3. Food and Beverage section " << setw(10) << "|" << endl;
+	cout << setw(30) << "|" << setw(22) << "0. Return " << setw(29) << "|" << endl;
+
+	cout << setw(30) << "|" << setw(51) << "|" << endl;
+
+	cout << setw(30) << " " << setw(50) << setfill('-') << "" << setfill(' ') << endl;
+
+	cout << setw(63) << "Enter your choice here: ";
+	cin >> input;
+
+
+	while (cin.fail() || input < 0 || input > 3) {
+		clearBuff();
+		cout << "\n" << setw(72) << "(!) Invalid input, choose 0 to 3 only" << endl;
+		cout << setw(63) << "Enter your choice here: ";
+		cin >> input;
+	}
+
+	switch (input) {
+
+	case 1:
+
+		MovieList();
+		int back;
+		cout << endl << endl << setw(37) << "" << "Press(0) to return: ";
+		cin >> back;
+
+		while (cin.fail() || back != 0) {
+			clearBuff();
+			cout << endl << setw(38) << "" << "(!) Invalid input." << endl;
+			cout << setw(38) << "" << "Press (0) to return: ";
+			cin >> back;
+		}
+
+		UserMenu();
+
+		break;
+
+	case 2:
+		MovieMenu();
+		break;
+
+	case 3:
+		OutterfoodNBeverageMenu(foodOrder, foodIndex);
+		Invoice(foodOrder, foodIndex);
+		break;
+
+	case 0:
+		UserLogin();
+		break;
+
+	}
+}
+
+// staff menu
+void staffmenu() {
+	cls();
+
+	int choice;
+	cout << setw(33) << " " << setw(45) << setfill('-') << "" << setfill(' ') << endl;
+
+
+	cout << setw(33) << "|" << setw(10) << "" << " ----------------------- " << "" << setw(11) << "|" << endl;
+	cout << setw(33) << "|" << setw(10) << "" << "|     STAFF SECTION     |" << "" << setw(11) << "|" << endl;
+	cout << setw(33) << "|" << setw(10) << "" << " ----------------------- " << "" << setw(11) << "|" << endl;
+
+
+	cout << setw(33) << "|" << setw(46) << "|" << endl;
+
+
+	cout << setw(33) << "|" << setw(12) << "" << "1. Sales Report" << setw(19) << "|" << endl;
+	cout << setw(33) << "|" << setw(12) << "" << "2. User Check-in" << setw(18) << "|" << endl;
+	cout << setw(33) << "|" << setw(12) << "" << "3. Movie Setting" << setw(18) << "|" << endl;
+	cout << setw(33) << "|" << setw(12) << "" << "4. Program Shut Down" << setw(14) << "|" << endl;
+	cout << setw(33) << "|" << setw(12) << "" << "0. Return" << setw(25) << "|" << endl;
+
+
+	cout << setw(33) << "|" << setw(46) << "|" << endl;
+
+
+	cout << setw(33) << " " << setw(45) << setfill('-') << "" << setfill(' ') << endl;
+
+
+	cout << setw(66) << "Enter your choice here: ";
+	cin >> choice;
+
+
+	while (cin.fail() || (choice < 0 || choice > 4)) {
+		clearBuff();
+		cout << endl;
+		cout << setw(72) << "(!) Invalid input, please try again." << endl;
+		cout << setw(64) << "Enter your choice here: ";
+		cin >> choice;
+		cout << endl;
+	}
+
+	switch (choice) {
+
+	case 1:
+		SalesReport();
+		break;
+
+	case 2:
+		CustCheckin();
+		break;
+
+	case 3:
+		Moviesetting();
+		break;
+
+	case 4:
+		exit(0);
+		break;
+
+	case 0:
+		UserLogin();
+		break;
+
+		break;
+
+	}
+}
+
+// staff verification
+void StaffLogin() {
+
+	int Staffid, valid = 0;
+	string choose;
+
+
+	do {
+		cls();
+		cout << setw(33) << " " << setw(45) << setfill('-') << "" << setfill(' ') << endl;
+		cout << setw(33) << "|" << setw(10) << "" << " ----------------------- " << "" << setw(11) << "|" << endl;
+		cout << setw(33) << "|" << setw(10) << "" << "|      STAFF LOGIN      |" << "" << setw(11) << "|" << endl;
+		cout << setw(33) << "|" << setw(10) << "" << " ----------------------- " << "" << setw(11) << "|" << endl;
+		cout << setw(33) << "|" << setw(46) << "|" << endl;
+		cout << setw(33) << "|" << setw(9) << "" << "Please enter your Staff Id" << "" << setw(11) << "|" << endl;
+		cout << setw(33) << "|" << setw(46) << "|" << endl;
+		cout << setw(33) << " " << setw(45) << setfill('-') << "" << setfill(' ') << endl;
+		cout << setw(33) << endl;
+		cout << setw(33) << "" << setw(22) << "Enter: ";
+		cin >> Staffid;
+
+		if (cin.fail() || Staffid != staffid) {
+			clearBuff();
+			cout << endl;
+			cout << setw(33) << "" << setw(28) << "[Wrong Input]" << endl;
+			cout << setw(33) << "" << setw(36) << "Would you like to try again?" << endl; // give user decide want to exit the loop a not
+
+			cout << endl << endl;
+			string select = Checking();
+
+			if (select == "Y") {
+				valid = 1; //  as flag
+
+			}
+			else {
+				UserLogin();
+				return;
+
+			}
+
+		}
+
+		else {
+			staffmenu();
+			return;
+		}
+
+	} while (valid == 1);
+
+}
+
+// Identify role
+void UserLogin() {
+	int select;
+
+	cls();
+	cout << setw(39) << "" << setw(1) << "  * ============================ *" << endl;
+	cout << setw(39) << "" << setw(1) << " =                                =" << endl;
+	cout << setw(39) << "" << setw(1) << " =   Welcome to GetChiLL Cinema   = " << endl;
+	cout << setw(39) << "" << setw(1) << " =                                =" << endl;
+	cout << setw(39) << "" << setw(1) << "  * ============================ *" << endl; // logo
+
+	cout << endl;
+	cout << endl;
+	cout << setw(35) << "" << setw(44) << setfill('-') << "" << setfill(' ') << endl;
+	cout << setw(35) << "|" << setw(32) << " ------------------ " << setw(13) << "|" << endl;
+	cout << setw(35) << "|" << setw(32) << "|    LOGIN MENU    |" << setw(13) << "|" << endl;
+	cout << setw(35) << "|" << setw(32) << " ------------------ " << setw(13) << "|" << endl;
+	cout << setw(35) << "|" << setw(45) << "|" << endl;
+	cout << setw(35) << "|" << setw(30) << "(1) CUSTOMER LOGIN" << setw(15) << "|" << endl;
+	cout << setw(35) << "|" << setw(27) << "(2) STAFF LOGIN" << setw(18) << "|" << endl;
+	cout << setw(35) << "|" << setw(45) << "|" << endl;
+	cout << setw(35) << "" << setw(44) << setfill('-') << "" << setfill(' ') << endl; // selection for userlogin
+	cout << endl;
+	cout << setw(47) << "" << setw(1) << "SELECT: ";
+	cin >> select;
+
+	while (cin.fail() || (select != 1 && select != 2)) {
+		clearBuff();
+		cout << endl;
+		cout << setw(73) << "(!) Invalid input, please try again." << endl;
+		cout << setw(48) << "Enter: ";
+		cin >> select;
+		cout << endl;
+	}
+
+
+
+	if (select == 1) {
+
+		UserMenu();
+		return;
+	}
+	else {
+		StaffLogin();
+		return;
+	}
+}
+
+int main() {
+
+
+	UserLogin();
+
+	return 0;
+}
